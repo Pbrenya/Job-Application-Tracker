@@ -2,8 +2,40 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { check, validationResult } = require('express-validator');
+const upload = require('../middleware/upload');
 const applicationRepository = require('../repositories/applications.repository');
 const logger = require('../logger');
+
+// @route    POST api/applications/:id/resume
+// @desc     Upload a resume for an application
+// @access   Private
+router.post('/:id/resume', auth, (req, res, next) => {
+    upload(req, res, async (err) => {
+        if (err) {
+            return res.status(400).json({ msg: err });
+        }
+        if (req.file == undefined) {
+            return res.status(400).json({ msg: 'Error: No File Selected!' });
+        }
+        
+        try {
+            const application = await applicationRepository.findById(req.params.id, req.user.id);
+            if (!application) {
+                return res.status(404).json({ msg: 'Application not found' });
+            }
+
+            const updatedApplication = await applicationRepository.update(req.params.id, req.user.id, { resume_path: req.file.path });
+            res.json({
+                msg: 'File uploaded successfully',
+                file: req.file.path,
+                application: updatedApplication
+            });
+        } catch (dbErr) {
+            logger.error(dbErr.message);
+            next(dbErr);
+        }
+    });
+});
 
 // @route    GET api/applications
 // @desc     Get all applications for a user
@@ -24,7 +56,10 @@ router.get('/', auth, async (req, res, next) => {
 router.post('/', [auth, [
     check('company_id', 'Company is required').not().isEmpty(),
     check('job_title', 'Job title is required').not().isEmpty(),
-    check('stage_id', 'Stage is required').not().isEmpty(),
+    check('stage_id', 'Stage is required').not().isEmpty().isNumeric(),
+    check('salary_min', 'Salary must be a number').optional().isNumeric(),
+    check('salary_max', 'Salary must be a number').optional().isNumeric(),
+    check('applied_at', 'Invalid date format').optional().isISO8601(),
 ]], async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -33,7 +68,7 @@ router.post('/', [auth, [
 
     try {
         const newApplication = await applicationRepository.create({ ...req.body, user_id: req.user.id });
-        res.json(newApplication);
+        res.status(201).json(newApplication);
     } catch (err) {
         logger.error(err.message);
         next(err);
@@ -61,7 +96,17 @@ router.get('/:id', auth, async (req, res, next) => {
 // @route    PATCH api/applications/:id
 // @desc     Update application
 // @access   Private
-router.patch('/:id', auth, async (req, res, next) => {
+router.patch('/:id', [auth, [
+    check('stage_id', 'Stage must be a number').optional().isNumeric(),
+    check('salary_min', 'Salary must be a number').optional().isNumeric(),
+    check('salary_max', 'Salary must be a number').optional().isNumeric(),
+    check('applied_at', 'Invalid date format').optional().isISO8601(),
+]], async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         const updatedApplication = await applicationRepository.update(req.params.id, req.user.id, req.body);
 

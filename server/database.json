@@ -1,0 +1,25 @@
+{
+    "dev": {
+        "driver": "mssql",
+        "user": "your_username",
+        "password": "your_password",
+        "host": "localhost",
+        "database": "JobApplicationTracker",
+        "options": {
+            "encrypt": true,
+            "trustServerCertificate": true
+        }
+    },
+    "test": {
+        "driver": "mssql",
+        "user": "your_username",
+        "password": "your_password",
+        "host": "localhost",
+        "database": "JobApplicationTracker_Test",
+        "options": {
+            "encrypt": true,
+            "trustServerCertificate": true
+        }
+    },
+    "sql-file": true
+}

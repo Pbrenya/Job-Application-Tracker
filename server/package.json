@@ -4,14 +4,18 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --config jest.config.js",
+    "migrate": "db-migrate"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "db-migrate": "^0.11.14",
+    "db-migrate-mssql": "^2.1.0",
     "express": "^5.2.1",
-    "mssql": "^12.5.2"
+    "mssql": "^12.5.2",
+    "multer": "^2.1.1"
   }
 }

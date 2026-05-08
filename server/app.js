@@ -10,6 +10,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/applications', require('./routes/applications'));
 app.use('/api/companies', require('./routes/companies'));
 app.use('/api', require('./routes/notes'));
+app.use('/api/analytics', require('./routes/analytics'));
 
 // Error Handler Middleware
 app.use(errorHandler);

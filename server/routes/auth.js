@@ -3,7 +3,8 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { check, validationResult } = require('express-validator');
-const { poolPromise } = require('../db');
+const userRepository = require('../repositories/users.repository');
+const logger = require('../logger');
 
 // @route    POST api/auth/register
 // @desc     Register user
@@ -17,7 +18,7 @@ router.post(
       'Please enter a password with 6 or more characters'
     ).isLength({ min: 6 }),
   ],
-  async (req, res) => {
+  async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -26,43 +27,35 @@ router.post(
     const { email, password } = req.body;
 
     try {
-      const pool = await poolPromise;
-      let result = await pool.request()
-        .input('email', email)
-        .query('SELECT * FROM users WHERE email = @email');
+      let user = await userRepository.findByEmail(email);
 
-      if (result.recordset.length > 0) {
+      if (user) {
         return res.status(400).json({ msg: 'User already exists' });
       }
 
       const salt = await bcrypt.genSalt(12);
       const password_hash = await bcrypt.hash(password, salt);
 
-      result = await pool.request()
-        .input('email', email)
-        .input('password_hash', password_hash)
-        .query('INSERT INTO users (email, password_hash) OUTPUT INSERTED.id VALUES (@email, @password_hash)');
-      
-      const user_id = result.recordset[0].id;
+      const newUser = await userRepository.create(email, password_hash);
 
       const payload = {
         user: {
-          id: user_id,
+          id: newUser.id,
         },
       };
 
       jwt.sign(
         payload,
         process.env.JWT_SECRET,
-        { expiresIn: 360000 },
+        { expiresIn: '5h' }, // Changed for better readability
         (err, token) => {
           if (err) throw err;
-          res.json({ token });
+          res.status(201).json({ token });
         }
       );
     } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server error');
+      logger.error(`Registration failed: ${err.message}`);
+      next(err);
     }
   }
 );
@@ -76,7 +69,7 @@ router.post(
     check('email', 'Please include a valid email').isEmail(),
     check('password', 'Password is required').exists(),
   ],
-  async (req, res) => {
+  async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -85,16 +78,11 @@ router.post(
     const { email, password } = req.body;
 
     try {
-      const pool = await poolPromise;
-      const result = await pool.request()
-        .input('email', email)
-        .query('SELECT * FROM users WHERE email = @email');
+      const user = await userRepository.findByEmail(email);
 
-      if (result.recordset.length === 0) {
+      if (!user) {
         return res.status(400).json({ msg: 'Invalid Credentials' });
       }
-
-      const user = result.recordset[0];
 
       const isMatch = await bcrypt.compare(password, user.password_hash);
 
@@ -111,15 +99,15 @@ router.post(
       jwt.sign(
         payload,
         process.env.JWT_SECRET,
-        { expiresIn: 360000 },
+        { expiresIn: '5h' },
         (err, token) => {
           if (err) throw err;
           res.json({ token });
         }
       );
     } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server error');
+      logger.error(`Login failed: ${err.message}`);
+      next(err);
     }
   }
 );
