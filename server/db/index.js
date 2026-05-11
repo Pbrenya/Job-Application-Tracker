@@ -1,11 +1,14 @@
 const sql = require('mssql');
+const logger = require('../logger');
+
+const port = process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 1433;
 
 const config = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     server: process.env.DB_SERVER || 'localhost', // Provide a default for testing
     database: process.env.DB_DATABASE,
-    port: parseInt(process.env.DB_PORT, 10),
+    port,
     options: {
         encrypt: process.env.NODE_ENV === 'production',
         trustServerCertificate: true // Use true for local development
