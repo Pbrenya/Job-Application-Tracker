@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/app/components/AppShell";
 import RequireAuth from "@/app/components/RequireAuth";
+import { useFilters } from "@/app/components/FiltersContext";
 import {
   Application,
   Company,
@@ -13,6 +14,7 @@ import {
   getCompanies,
   updateApplication,
 } from "@/app/lib/api";
+import { applyApplicationFilters } from "@/app/lib/filters";
 
 type ApplicationFormState = {
   company_id: string;
@@ -42,6 +44,8 @@ const toOptionalNumber = (value: string) =>
 const toOptionalString = (value: string) =>
   value.trim() === "" ? undefined : value.trim();
 
+const cardTones = ["peach", "mint", "lavender", "sky", "pink", "slate"];
+
 const formatDateInput = (value?: string | null) => {
   if (!value) {
     return "";
@@ -62,10 +66,16 @@ export default function ApplicationsPage() {
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
+  const { filters } = useFilters();
 
   const companyMap = useMemo(
     () => new Map(companies.map((company) => [company.id, company.name])),
     [companies]
+  );
+
+  const filteredApplications = useMemo(
+    () => applyApplicationFilters(applications, companies, filters),
+    [applications, companies, filters]
   );
 
   const loadData = async () => {
@@ -195,354 +205,370 @@ export default function ApplicationsPage() {
 
   return (
     <RequireAuth>
-      <AppShell>
-        <div className="flex flex-col gap-6">
-          <h1 className="text-2xl font-semibold">Applications</h1>
-          {loading ? <p className="text-sm">Loading...</p> : null}
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
-          {status ? <p className="text-sm text-green-700">{status}</p> : null}
+      <AppShell fullBleed>
+        <div className="jt-page">
+          <div className="jt-page__head">
+            <div>
+              <h1>Applications</h1>
+              <p className="jt-page__subtitle">
+                Manage every role, stage, and salary range in one place.
+              </p>
+            </div>
+            <Link className="jt-button jt-button--outline" href="/companies">
+              Manage companies
+            </Link>
+          </div>
+          {loading ? <p className="jt-page__subtitle">Loading...</p> : null}
+          {error ? <p className="jt-alert jt-alert--error">{error}</p> : null}
+          {status ? (
+            <p className="jt-alert jt-alert--success">{status}</p>
+          ) : null}
 
-          <section className="rounded-md border border-zinc-200 p-4">
-            <h2 className="text-sm font-semibold">Add application</h2>
-            <form className="mt-4 grid gap-4" onSubmit={handleCreate}>
-              <label className="text-sm text-zinc-700">
-                Company
-                <select
-                  className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                  value={form.company_id}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      company_id: event.target.value,
-                    }))
-                  }
-                  required
-                >
-                  <option value="">Select company</option>
-                  {companies.map((company) => (
-                    <option key={company.id} value={company.id}>
-                      {company.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-sm text-zinc-700">
-                Job title
-                <input
-                  className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                  value={form.job_title}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      job_title: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </label>
-              <label className="text-sm text-zinc-700">
-                Stage id
-                <input
-                  className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                  type="number"
-                  value={form.stage_id}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      stage_id: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </label>
-              <label className="text-sm text-zinc-700">
-                Applied date
-                <input
-                  className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                  type="date"
-                  value={form.applied_at}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      applied_at: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-              <label className="text-sm text-zinc-700">
-                Salary min
-                <input
-                  className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                  type="number"
-                  value={form.salary_min}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      salary_min: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-              <label className="text-sm text-zinc-700">
-                Salary max
-                <input
-                  className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                  type="number"
-                  value={form.salary_max}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      salary_max: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-              <label className="text-sm text-zinc-700">
-                Job URL
-                <input
-                  className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                  type="url"
-                  value={form.job_url}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      job_url: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-              <label className="text-sm text-zinc-700">
-                Description
-                <textarea
-                  className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                  value={form.description}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      description: event.target.value,
-                    }))
-                  }
-                  rows={3}
-                />
-              </label>
-              <button
-                type="submit"
-                className="rounded-md border border-zinc-300 px-3 py-2 text-sm"
-              >
-                Add application
-              </button>
-            </form>
-          </section>
+          <div className="jt-split">
+            <section className="jt-panel">
+              <div className="jt-panel__title">Add application</div>
+              <form className="jt-form" onSubmit={handleCreate}>
+                <label className="jt-field">
+                  Company
+                  <select
+                    className="jt-select"
+                    value={form.company_id}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        company_id: event.target.value,
+                      }))
+                    }
+                    required
+                  >
+                    <option value="">Select company</option>
+                    {companies.map((company) => (
+                      <option key={company.id} value={company.id}>
+                        {company.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="jt-field">
+                  Job title
+                  <input
+                    className="jt-input"
+                    value={form.job_title}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        job_title: event.target.value,
+                      }))
+                    }
+                    required
+                  />
+                </label>
+                <label className="jt-field">
+                  Stage id
+                  <input
+                    className="jt-input"
+                    type="number"
+                    value={form.stage_id}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        stage_id: event.target.value,
+                      }))
+                    }
+                    required
+                  />
+                </label>
+                <label className="jt-field">
+                  Applied date
+                  <input
+                    className="jt-input"
+                    type="date"
+                    value={form.applied_at}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        applied_at: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="jt-field">
+                  Salary min
+                  <input
+                    className="jt-input"
+                    type="number"
+                    value={form.salary_min}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        salary_min: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="jt-field">
+                  Salary max
+                  <input
+                    className="jt-input"
+                    type="number"
+                    value={form.salary_max}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        salary_max: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="jt-field">
+                  Job URL
+                  <input
+                    className="jt-input"
+                    type="url"
+                    value={form.job_url}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        job_url: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="jt-field">
+                  Description
+                  <textarea
+                    className="jt-textarea"
+                    value={form.description}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        description: event.target.value,
+                      }))
+                    }
+                    rows={3}
+                  />
+                </label>
+                <button type="submit" className="jt-button jt-button--primary">
+                  Add application
+                </button>
+              </form>
+            </section>
 
-          <section className="rounded-md border border-zinc-200 p-4">
-            <h2 className="text-sm font-semibold">Current applications</h2>
-            {applications.length === 0 ? (
-              <p className="mt-3 text-sm text-zinc-600">No applications yet.</p>
-            ) : (
-              <div className="mt-4 flex flex-col gap-4">
-                {applications.map((application) => {
-                  const companyName =
-                    companyMap.get(application.company_id) ?? "Unknown company";
-                  const isEditing = editingId === application.id;
-                  return (
-                    <div
-                      key={application.id}
-                      className="rounded-md border border-zinc-200 p-4"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <div className="text-sm font-semibold">
-                            {application.job_title}
+            <section className="jt-panel">
+              <div className="jt-panel__title">Current applications</div>
+              {filteredApplications.length === 0 ? (
+                <p className="jt-page__subtitle">
+                  {applications.length === 0
+                    ? "No applications yet."
+                    : "No applications match the current filters."}
+                </p>
+              ) : (
+                <div className="jt-grid">
+                  {filteredApplications.map((application, index) => {
+                    const companyName =
+                      companyMap.get(application.company_id) ??
+                      "Unknown company";
+                    const isEditing = editingId === application.id;
+                    return (
+                      <div
+                        key={application.id}
+                        className={`jt-item-card jt-item-card--${
+                          cardTones[index % cardTones.length]
+                        }`}
+                        style={{ animationDelay: `${0.05 * index}s` }}
+                      >
+                        <div className="jt-item-card__head">
+                          <div>
+                            <div className="jt-item-card__title">
+                              {application.job_title}
+                            </div>
+                            <div className="jt-item-card__meta">
+                              {companyName}
+                            </div>
                           </div>
-                          <div className="text-xs text-zinc-600">
-                            {companyName}
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2 text-sm">
-                          <Link
-                            className="rounded-md border border-zinc-300 px-2 py-1"
-                            href={`/applications/${application.id}`}
-                          >
-                            Details
-                          </Link>
-                          <button
-                            type="button"
-                            className="rounded-md border border-zinc-300 px-2 py-1"
-                            onClick={() => startEdit(application)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded-md border border-zinc-300 px-2 py-1"
-                            onClick={() => handleDelete(application.id)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                      <div className="mt-2 text-xs text-zinc-600">
-                        Stage: {application.stage_id}
-                        {application.applied_at
-                          ? ` | Applied: ${formatDateInput(
-                              application.applied_at
-                            )}`
-                          : ""}
-                      </div>
-                      {application.resume_path ? (
-                        <div className="mt-1 text-xs text-zinc-600">
-                          Resume: {application.resume_path}
-                        </div>
-                      ) : null}
-
-                      {isEditing ? (
-                        <form
-                          className="mt-4 grid gap-4"
-                          onSubmit={handleUpdate}
-                        >
-                          <label className="text-sm text-zinc-700">
-                            Company
-                            <select
-                              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                              value={editForm.company_id}
-                              onChange={(event) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  company_id: event.target.value,
-                                }))
-                              }
-                              required
+                          <div className="jt-row">
+                            <Link
+                              className="jt-button jt-button--outline jt-button--sm"
+                              href={`/applications/${application.id}`}
                             >
-                              <option value="">Select company</option>
-                              {companies.map((company) => (
-                                <option key={company.id} value={company.id}>
-                                  {company.name}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                          <label className="text-sm text-zinc-700">
-                            Job title
-                            <input
-                              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                              value={editForm.job_title}
-                              onChange={(event) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  job_title: event.target.value,
-                                }))
-                              }
-                              required
-                            />
-                          </label>
-                          <label className="text-sm text-zinc-700">
-                            Stage id
-                            <input
-                              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                              type="number"
-                              value={editForm.stage_id}
-                              onChange={(event) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  stage_id: event.target.value,
-                                }))
-                              }
-                              required
-                            />
-                          </label>
-                          <label className="text-sm text-zinc-700">
-                            Applied date
-                            <input
-                              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                              type="date"
-                              value={editForm.applied_at}
-                              onChange={(event) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  applied_at: event.target.value,
-                                }))
-                              }
-                            />
-                          </label>
-                          <label className="text-sm text-zinc-700">
-                            Salary min
-                            <input
-                              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                              type="number"
-                              value={editForm.salary_min}
-                              onChange={(event) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  salary_min: event.target.value,
-                                }))
-                              }
-                            />
-                          </label>
-                          <label className="text-sm text-zinc-700">
-                            Salary max
-                            <input
-                              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                              type="number"
-                              value={editForm.salary_max}
-                              onChange={(event) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  salary_max: event.target.value,
-                                }))
-                              }
-                            />
-                          </label>
-                          <label className="text-sm text-zinc-700">
-                            Job URL
-                            <input
-                              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                              type="url"
-                              value={editForm.job_url}
-                              onChange={(event) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  job_url: event.target.value,
-                                }))
-                              }
-                            />
-                          </label>
-                          <label className="text-sm text-zinc-700">
-                            Description
-                            <textarea
-                              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                              value={editForm.description}
-                              onChange={(event) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  description: event.target.value,
-                                }))
-                              }
-                              rows={3}
-                            />
-                          </label>
-                          <div className="flex flex-wrap gap-2">
+                              Details
+                            </Link>
                             <button
-                              type="submit"
-                              className="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                              type="button"
+                              className="jt-button jt-button--outline jt-button--sm"
+                              onClick={() => startEdit(application)}
                             >
-                              Save
+                              Edit
                             </button>
                             <button
                               type="button"
-                              className="rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                              onClick={cancelEdit}
+                              className="jt-button jt-button--outline jt-button--sm"
+                              onClick={() => handleDelete(application.id)}
                             >
-                              Cancel
+                              Delete
                             </button>
                           </div>
-                        </form>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
+                        </div>
+                        <div className="jt-item-card__meta">
+                          Stage: {application.stage_id}
+                          {application.applied_at
+                            ? ` | Applied: ${formatDateInput(
+                                application.applied_at
+                              )}`
+                            : ""}
+                        </div>
+                        {application.resume_path ? (
+                          <div className="jt-item-card__meta">
+                            Resume: {application.resume_path}
+                          </div>
+                        ) : null}
+
+                        {isEditing ? (
+                          <form className="jt-form" onSubmit={handleUpdate}>
+                            <label className="jt-field">
+                              Company
+                              <select
+                                className="jt-select"
+                                value={editForm.company_id}
+                                onChange={(event) =>
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    company_id: event.target.value,
+                                  }))
+                                }
+                                required
+                              >
+                                <option value="">Select company</option>
+                                {companies.map((company) => (
+                                  <option key={company.id} value={company.id}>
+                                    {company.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="jt-field">
+                              Job title
+                              <input
+                                className="jt-input"
+                                value={editForm.job_title}
+                                onChange={(event) =>
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    job_title: event.target.value,
+                                  }))
+                                }
+                                required
+                              />
+                            </label>
+                            <label className="jt-field">
+                              Stage id
+                              <input
+                                className="jt-input"
+                                type="number"
+                                value={editForm.stage_id}
+                                onChange={(event) =>
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    stage_id: event.target.value,
+                                  }))
+                                }
+                                required
+                              />
+                            </label>
+                            <label className="jt-field">
+                              Applied date
+                              <input
+                                className="jt-input"
+                                type="date"
+                                value={editForm.applied_at}
+                                onChange={(event) =>
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    applied_at: event.target.value,
+                                  }))
+                                }
+                              />
+                            </label>
+                            <label className="jt-field">
+                              Salary min
+                              <input
+                                className="jt-input"
+                                type="number"
+                                value={editForm.salary_min}
+                                onChange={(event) =>
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    salary_min: event.target.value,
+                                  }))
+                                }
+                              />
+                            </label>
+                            <label className="jt-field">
+                              Salary max
+                              <input
+                                className="jt-input"
+                                type="number"
+                                value={editForm.salary_max}
+                                onChange={(event) =>
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    salary_max: event.target.value,
+                                  }))
+                                }
+                              />
+                            </label>
+                            <label className="jt-field">
+                              Job URL
+                              <input
+                                className="jt-input"
+                                type="url"
+                                value={editForm.job_url}
+                                onChange={(event) =>
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    job_url: event.target.value,
+                                  }))
+                                }
+                              />
+                            </label>
+                            <label className="jt-field">
+                              Description
+                              <textarea
+                                className="jt-textarea"
+                                value={editForm.description}
+                                onChange={(event) =>
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    description: event.target.value,
+                                  }))
+                                }
+                                rows={3}
+                              />
+                            </label>
+                            <div className="jt-row">
+                              <button
+                                type="submit"
+                                className="jt-button jt-button--primary jt-button--sm"
+                              >
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                className="jt-button jt-button--outline jt-button--sm"
+                                onClick={cancelEdit}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </form>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </div>
         </div>
       </AppShell>
     </RequireAuth>

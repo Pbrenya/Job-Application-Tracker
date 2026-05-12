@@ -1,58 +1,58 @@
-/* Replace this file with actual up migration SQL */
 CREATE TABLE users (
-    id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    username NVARCHAR(50) NOT NULL UNIQUE,
-    email NVARCHAR(100) NOT NULL UNIQUE,
-    password_hash NVARCHAR(255) NOT NULL,
-    created_at DATETIME2 DEFAULT GETDATE(),
-    updated_at DATETIME2 DEFAULT GETDATE()
+    id CHAR(36) PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE companies (
-    id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    name NVARCHAR(100) NOT NULL,
-    user_id UNIQUEIDENTIFIER NOT NULL,
-    created_at DATETIME2 DEFAULT GETDATE(),
-    updated_at DATETIME2 DEFAULT GETDATE(),
-    deleted_at DATETIME2,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    website VARCHAR(255),
+    location VARCHAR(255),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+    CONSTRAINT fk_companies_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE stages (
-    id INT PRIMARY KEY IDENTITY(1,1),
-    name NVARCHAR(50) NOT NULL UNIQUE
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(50) NOT NULL UNIQUE
 );
 
 INSERT INTO stages (name) VALUES ('Applied'), ('Screening'), ('Interview'), ('Offer'), ('Rejected'), ('Hired');
 
 CREATE TABLE applications (
-    id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    user_id UNIQUEIDENTIFIER NOT NULL,
-    company_id UNIQUEIDENTIFIER NOT NULL,
-    job_title NVARCHAR(100) NOT NULL,
-    description NVARCHAR(MAX),
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    company_id CHAR(36) NOT NULL,
+    job_title VARCHAR(255) NOT NULL,
+    description TEXT,
     applied_at DATE,
     stage_id INT NOT NULL,
     salary_min INT,
     salary_max INT,
-    job_url NVARCHAR(255),
-    resume_path NVARCHAR(255),
-    created_at DATETIME2 DEFAULT GETDATE(),
-    updated_at DATETIME2 DEFAULT GETDATE(),
-    deleted_at DATETIME2,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (company_id) REFERENCES companies(id),
-    FOREIGN KEY (stage_id) REFERENCES stages(id)
+    job_url VARCHAR(255),
+    resume_path VARCHAR(255),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME,
+    CONSTRAINT fk_applications_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_applications_company FOREIGN KEY (company_id) REFERENCES companies(id),
+    CONSTRAINT fk_applications_stage FOREIGN KEY (stage_id) REFERENCES stages(id)
 );
 
 CREATE TABLE notes (
-    id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    application_id UNIQUEIDENTIFIER NOT NULL,
-    user_id UNIQUEIDENTIFIER NOT NULL,
-    note NVARCHAR(MAX) NOT NULL,
-    created_at DATETIME2 DEFAULT GETDATE(),
-    updated_at DATETIME2 DEFAULT GETDATE(),
-    deleted_at DATETIME2,
-    FOREIGN KEY (application_id) REFERENCES applications(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    id CHAR(36) PRIMARY KEY,
+    application_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    note TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+    CONSTRAINT fk_notes_application FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE,
+    CONSTRAINT fk_notes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

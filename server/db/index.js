@@ -1,18 +1,17 @@
-const sql = require('mssql');
+const mysql = require('mysql2/promise');
 const logger = require('../logger');
 
-const port = process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 1433;
+const port = process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306;
 
 const config = {
+    host: process.env.DB_SERVER || 'localhost',
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    server: process.env.DB_SERVER || 'localhost', // Provide a default for testing
     database: process.env.DB_DATABASE,
     port,
-    options: {
-        encrypt: process.env.NODE_ENV === 'production',
-        trustServerCertificate: true // Use true for local development
-    }
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
 };
 
 let pool = null;
@@ -22,35 +21,37 @@ const connect = async () => {
         return pool;
     }
     try {
-        // Check if required config values are present
-        if (!config.server || !config.user || !config.database) {
+        if (!config.host || !config.user || !config.database) {
             throw new Error('Database configuration is incomplete. Make sure DB_SERVER, DB_USER, and DB_DATABASE are set.');
         }
-        pool = await new sql.ConnectionPool(config).connect();
-        logger.info('Database connection successful!');
+        pool = mysql.createPool(config);
+        logger.info('Database connection pool created.');
         return pool;
     } catch (err) {
-        logger.error('Database Connection Failed! Bad Config: ', err.message);
-        // Don't exit the process, let the app handle the error
+        logger.error(`Database Connection Failed: ${err.message}`);
         throw err;
     }
 };
 
-const query = async (text, params) => {
+const query = async (text, params = []) => {
     if (!pool) {
         await connect();
     }
-    return pool.query(text, params);
+    const [rows] = await pool.query(text, params);
+    const rowsAffected = Array.isArray(rows) ? 0 : rows?.affectedRows ?? 0;
+    return {
+        recordset: Array.isArray(rows) ? rows : [],
+        rowsAffected: [rowsAffected],
+    };
 };
 
 module.exports = {
     query,
     connect,
-    // Add a disconnect function for graceful shutdown in tests
     disconnect: async () => {
         if (pool) {
-            await pool.close();
+            await pool.end();
             pool = null;
         }
-    }
+    },
 };

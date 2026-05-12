@@ -1,6 +1,5 @@
-/* Replace this file with actual down migration SQL */
-DROP TABLE notes;
-DROP TABLE applications;
-DROP TABLE stages;
-DROP TABLE companies;
-DROP TABLE users;
+DROP TABLE IF EXISTS notes;
+DROP TABLE IF EXISTS applications;
+DROP TABLE IF EXISTS stages;
+DROP TABLE IF EXISTS companies;
+DROP TABLE IF EXISTS users;

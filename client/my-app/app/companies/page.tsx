@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/app/components/AppShell";
 import RequireAuth from "@/app/components/RequireAuth";
+import { useFilters } from "@/app/components/FiltersContext";
 import {
   Company,
   createCompany,
@@ -10,6 +11,7 @@ import {
   getCompanies,
   updateCompany,
 } from "@/app/lib/api";
+import { applyCompanyFilters } from "@/app/lib/filters";
 
 type CompanyFormState = {
   name: string;
@@ -26,6 +28,8 @@ const emptyForm: CompanyFormState = {
 const toOptionalString = (value: string) =>
   value.trim() === "" ? undefined : value.trim();
 
+const cardTones = ["peach", "mint", "lavender", "sky", "pink", "slate"];
+
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [form, setForm] = useState<CompanyFormState>(emptyForm);
@@ -34,6 +38,12 @@ export default function CompaniesPage() {
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
+  const { filters } = useFilters();
+
+  const filteredCompanies = useMemo(
+    () => applyCompanyFilters(companies, filters),
+    [companies, filters]
+  );
 
   const loadCompanies = async () => {
     setLoading(true);
@@ -134,180 +144,192 @@ export default function CompaniesPage() {
 
   return (
     <RequireAuth>
-      <AppShell>
-        <div className="flex flex-col gap-6">
-          <h1 className="text-2xl font-semibold">Companies</h1>
-          {loading ? <p className="text-sm">Loading...</p> : null}
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
-          {status ? <p className="text-sm text-green-700">{status}</p> : null}
+      <AppShell fullBleed>
+        <div className="jt-page">
+          <div className="jt-page__head">
+            <div>
+              <h1>Companies</h1>
+              <p className="jt-page__subtitle">
+                Keep a clear list of the teams you are targeting.
+              </p>
+            </div>
+          </div>
+          {loading ? <p className="jt-page__subtitle">Loading...</p> : null}
+          {error ? <p className="jt-alert jt-alert--error">{error}</p> : null}
+          {status ? (
+            <p className="jt-alert jt-alert--success">{status}</p>
+          ) : null}
 
-          <section className="rounded-md border border-zinc-200 p-4">
-            <h2 className="text-sm font-semibold">Add company</h2>
-            <form className="mt-4 grid gap-4" onSubmit={handleCreate}>
-              <label className="text-sm text-zinc-700">
-                Name
-                <input
-                  className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                  value={form.name}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      name: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </label>
-              <label className="text-sm text-zinc-700">
-                Location
-                <input
-                  className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                  value={form.location}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      location: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-              <label className="text-sm text-zinc-700">
-                Website
-                <input
-                  className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                  type="url"
-                  value={form.website}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      website: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-              <button
-                type="submit"
-                className="rounded-md border border-zinc-300 px-3 py-2 text-sm"
-              >
-                Add company
-              </button>
-            </form>
-          </section>
+          <div className="jt-split">
+            <section className="jt-panel">
+              <div className="jt-panel__title">Add company</div>
+              <form className="jt-form" onSubmit={handleCreate}>
+                <label className="jt-field">
+                  Name
+                  <input
+                    className="jt-input"
+                    value={form.name}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        name: event.target.value,
+                      }))
+                    }
+                    required
+                  />
+                </label>
+                <label className="jt-field">
+                  Location
+                  <input
+                    className="jt-input"
+                    value={form.location}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        location: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="jt-field">
+                  Website
+                  <input
+                    className="jt-input"
+                    type="url"
+                    value={form.website}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        website: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <button type="submit" className="jt-button jt-button--primary">
+                  Add company
+                </button>
+              </form>
+            </section>
 
-          <section className="rounded-md border border-zinc-200 p-4">
-            <h2 className="text-sm font-semibold">Company list</h2>
-            {companies.length === 0 ? (
-              <p className="mt-3 text-sm text-zinc-600">No companies yet.</p>
-            ) : (
-              <div className="mt-4 flex flex-col gap-4">
-                {companies.map((company) => {
-                  const isEditing = editingId === company.id;
-                  return (
-                    <div
-                      key={company.id}
-                      className="rounded-md border border-zinc-200 p-4"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <div className="text-sm font-semibold">
-                            {company.name}
+            <section className="jt-panel">
+              <div className="jt-panel__title">Company list</div>
+              {filteredCompanies.length === 0 ? (
+                <p className="jt-page__subtitle">
+                  {companies.length === 0
+                    ? "No companies yet."
+                    : "No companies match the current filters."}
+                </p>
+              ) : (
+                <div className="jt-grid">
+                  {filteredCompanies.map((company, index) => {
+                    const isEditing = editingId === company.id;
+                    return (
+                      <div
+                        key={company.id}
+                        className={`jt-item-card jt-item-card--${
+                          cardTones[index % cardTones.length]
+                        }`}
+                        style={{ animationDelay: `${0.05 * index}s` }}
+                      >
+                        <div className="jt-item-card__head">
+                          <div>
+                            <div className="jt-item-card__title">
+                              {company.name}
+                            </div>
+                            <div className="jt-item-card__meta">
+                              {company.location || "No location"}
+                            </div>
                           </div>
-                          <div className="text-xs text-zinc-600">
-                            {company.location || "No location"}
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2 text-sm">
-                          <button
-                            type="button"
-                            className="rounded-md border border-zinc-300 px-2 py-1"
-                            onClick={() => startEdit(company)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded-md border border-zinc-300 px-2 py-1"
-                            onClick={() => handleDelete(company.id)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                      {company.website ? (
-                        <div className="mt-1 text-xs text-zinc-600">
-                          Website: {company.website}
-                        </div>
-                      ) : null}
-
-                      {isEditing ? (
-                        <form
-                          className="mt-4 grid gap-4"
-                          onSubmit={handleUpdate}
-                        >
-                          <label className="text-sm text-zinc-700">
-                            Name
-                            <input
-                              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                              value={editForm.name}
-                              onChange={(event) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  name: event.target.value,
-                                }))
-                              }
-                              required
-                            />
-                          </label>
-                          <label className="text-sm text-zinc-700">
-                            Location
-                            <input
-                              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                              value={editForm.location}
-                              onChange={(event) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  location: event.target.value,
-                                }))
-                              }
-                            />
-                          </label>
-                          <label className="text-sm text-zinc-700">
-                            Website
-                            <input
-                              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                              type="url"
-                              value={editForm.website}
-                              onChange={(event) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  website: event.target.value,
-                                }))
-                              }
-                            />
-                          </label>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="jt-row">
                             <button
-                              type="submit"
-                              className="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                              type="button"
+                              className="jt-button jt-button--outline jt-button--sm"
+                              onClick={() => startEdit(company)}
                             >
-                              Save
+                              Edit
                             </button>
                             <button
                               type="button"
-                              className="rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                              onClick={cancelEdit}
+                              className="jt-button jt-button--outline jt-button--sm"
+                              onClick={() => handleDelete(company.id)}
                             >
-                              Cancel
+                              Delete
                             </button>
                           </div>
-                        </form>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
+                        </div>
+                        {company.website ? (
+                          <div className="jt-item-card__meta">
+                            Website: {company.website}
+                          </div>
+                        ) : null}
+
+                        {isEditing ? (
+                          <form className="jt-form" onSubmit={handleUpdate}>
+                            <label className="jt-field">
+                              Name
+                              <input
+                                className="jt-input"
+                                value={editForm.name}
+                                onChange={(event) =>
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    name: event.target.value,
+                                  }))
+                                }
+                                required
+                              />
+                            </label>
+                            <label className="jt-field">
+                              Location
+                              <input
+                                className="jt-input"
+                                value={editForm.location}
+                                onChange={(event) =>
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    location: event.target.value,
+                                  }))
+                                }
+                              />
+                            </label>
+                            <label className="jt-field">
+                              Website
+                              <input
+                                className="jt-input"
+                                type="url"
+                                value={editForm.website}
+                                onChange={(event) =>
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    website: event.target.value,
+                                  }))
+                                }
+                              />
+                            </label>
+                            <div className="jt-row">
+                              <button
+                                type="submit"
+                                className="jt-button jt-button--primary jt-button--sm"
+                              >
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                className="jt-button jt-button--outline jt-button--sm"
+                                onClick={cancelEdit}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </form>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </div>
         </div>
       </AppShell>
     </RequireAuth>

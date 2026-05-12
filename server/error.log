@@ -26,3 +26,4 @@
 {"level":"error","message":"Error finding user by email: logger is not defined","service":"user-service"}
 {"level":"error","message":"Registration failed: logger is not defined","service":"user-service"}
 {"error":{},"level":"error","message":"logger is not defined","service":"user-service"}
+{"level":"error","message":"Database Connection Failed: Database configuration is incomplete. Make sure DB_SERVER, DB_USER, and DB_DATABASE are set.","service":"user-service"}

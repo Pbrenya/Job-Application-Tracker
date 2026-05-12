@@ -1,3 +1,4 @@
+const { randomUUID } = require('crypto');
 const db = require('../db');
 const logger = require('../logger');
 
@@ -9,16 +10,31 @@ const logger = require('../logger');
  */
 const findAllByApplicationId = async (applicationId, userId) => {
     try {
-        const result = await db.query(`
+        const result = await db.query(
+            `
             SELECT n.* FROM notes n
             JOIN applications a ON n.application_id = a.id
-            WHERE n.application_id = @applicationId AND a.user_id = @userId AND n.is_deleted = 0
-        `, { applicationId, userId });
+            WHERE n.application_id = ? AND a.user_id = ? AND n.is_deleted = 0
+        `,
+            [applicationId, userId]
+        );
         return result.recordset;
     } catch (error) {
         logger.error(`Error finding notes by application ID: ${error.message}`);
         throw error;
     }
+};
+
+const findNoteForUser = async (noteId, userId) => {
+    const result = await db.query(
+        `
+        SELECT n.* FROM notes n
+        JOIN applications a ON n.application_id = a.id
+        WHERE n.id = ? AND a.user_id = ? AND n.is_deleted = 0
+        `,
+        [noteId, userId]
+    );
+    return result.recordset[0];
 };
 
 /**
@@ -31,16 +47,21 @@ const findAllByApplicationId = async (applicationId, userId) => {
 const create = async (applicationId, userId, noteText) => {
     try {
         // First, verify the application belongs to the user to prevent unauthorized notes
-        const appResult = await db.query('SELECT id FROM applications WHERE id = @applicationId AND user_id = @userId AND is_deleted = 0', { applicationId, userId });
+        const appResult = await db.query(
+            'SELECT id FROM applications WHERE id = ? AND user_id = ? AND deleted_at IS NULL',
+            [applicationId, userId]
+        );
         if (appResult.recordset.length === 0) {
             return null; // Application not found or doesn't belong to user
         }
 
-        const result = await db.query(
-            'INSERT INTO notes (application_id, note) OUTPUT INSERTED.* VALUES (@applicationId, @noteText)',
-            { applicationId, noteText }
+        const id = randomUUID();
+        await db.query(
+            `INSERT INTO notes (id, application_id, user_id, note, created_at, updated_at, is_deleted)
+             VALUES (?, ?, ?, ?, NOW(), NOW(), 0)`,
+            [id, applicationId, userId, noteText]
         );
-        return result.recordset[0];
+        return findNoteForUser(id, userId);
     } catch (error) {
         logger.error(`Error creating note: ${error.message}`);
         throw error;
@@ -56,15 +77,16 @@ const create = async (applicationId, userId, noteText) => {
  */
 const update = async (noteId, userId, noteText) => {
     try {
-        const result = await db.query(`
-            UPDATE notes 
-            SET note = @noteText, updated_at = GETDATE()
-            OUTPUT INSERTED.*
-            FROM notes n
+        await db.query(
+            `
+            UPDATE notes n
             JOIN applications a ON n.application_id = a.id
-            WHERE n.id = @noteId AND a.user_id = @userId AND n.is_deleted = 0
-        `, { noteId, userId, noteText });
-        return result.recordset[0];
+            SET n.note = ?, n.updated_at = NOW()
+            WHERE n.id = ? AND a.user_id = ? AND n.is_deleted = 0
+        `,
+            [noteText, noteId, userId]
+        );
+        return findNoteForUser(noteId, userId);
     } catch (error) {
         logger.error(`Error updating note: ${error.message}`);
         throw error;
@@ -79,13 +101,15 @@ const update = async (noteId, userId, noteText) => {
  */
 const softDelete = async (noteId, userId) => {
     try {
-        const result = await db.query(`
-            UPDATE notes 
-            SET is_deleted = 1, updated_at = GETDATE()
-            FROM notes n
+        const result = await db.query(
+            `
+            UPDATE notes n
             JOIN applications a ON n.application_id = a.id
-            WHERE n.id = @noteId AND a.user_id = @userId AND n.is_deleted = 0
-        `, { noteId, userId });
+            SET n.is_deleted = 1, n.updated_at = NOW()
+            WHERE n.id = ? AND a.user_id = ? AND n.is_deleted = 0
+        `,
+            [noteId, userId]
+        );
         return result.rowsAffected[0];
     } catch (error) {
         logger.error(`Error soft deleting note: ${error.message}`);

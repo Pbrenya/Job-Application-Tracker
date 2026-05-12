@@ -26,6 +26,8 @@ const formatDate = (value?: string | null) => {
   return parsed.toISOString().slice(0, 10);
 };
 
+const noteCardTones = ["peach", "mint", "lavender", "sky", "pink", "slate"];
+
 export default function ApplicationDetailPage() {
   const params = useParams();
   const applicationId = useMemo(() => {
@@ -149,46 +151,56 @@ export default function ApplicationDetailPage() {
 
   return (
     <RequireAuth>
-      <AppShell>
-        <div className="flex flex-col gap-6">
-          <h1 className="text-2xl font-semibold">Application details</h1>
-          {loading ? <p className="text-sm">Loading...</p> : null}
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
-          {status ? <p className="text-sm text-green-700">{status}</p> : null}
+      <AppShell fullBleed showFilters={false}>
+        <div className="jt-page">
+          <div className="jt-page__head">
+            <div>
+              <h1>Application details</h1>
+              <p className="jt-page__subtitle">
+                Keep notes, resumes, and updates in one view.
+              </p>
+            </div>
+          </div>
+          {loading ? <p className="jt-page__subtitle">Loading...</p> : null}
+          {error ? <p className="jt-alert jt-alert--error">{error}</p> : null}
+          {status ? (
+            <p className="jt-alert jt-alert--success">{status}</p>
+          ) : null}
 
           {application ? (
-            <section className="rounded-md border border-zinc-200 p-4">
-              <div className="text-sm font-semibold">
+            <section className="jt-panel">
+              <div className="jt-panel__title">Role overview</div>
+              <div className="jt-item-card__title">
                 {application.job_title}
               </div>
-              <div className="mt-2 text-sm text-zinc-600">
+              <div className="jt-item-card__meta">
                 Stage: {application.stage_id}
               </div>
               {application.applied_at ? (
-                <div className="text-sm text-zinc-600">
+                <div className="jt-item-card__meta">
                   Applied: {formatDate(application.applied_at)}
                 </div>
               ) : null}
               {application.job_url ? (
-                <div className="text-sm text-zinc-600">
+                <div className="jt-item-card__meta">
                   Job URL: {application.job_url}
                 </div>
               ) : null}
               {application.resume_path ? (
-                <div className="text-sm text-zinc-600">
+                <div className="jt-item-card__meta">
                   Resume: {application.resume_path}
                 </div>
               ) : null}
             </section>
           ) : null}
 
-          <section className="rounded-md border border-zinc-200 p-4">
-            <h2 className="text-sm font-semibold">Upload resume</h2>
-            <form className="mt-3 flex flex-col gap-3" onSubmit={handleUpload}>
-              <label className="text-sm text-zinc-700">
+          <section className="jt-panel">
+            <div className="jt-panel__title">Upload resume</div>
+            <form className="jt-form" onSubmit={handleUpload}>
+              <label className="jt-field">
                 Resume file
                 <input
-                  className="mt-1 block"
+                  className="jt-input"
                   type="file"
                   accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
                   onChange={(event) =>
@@ -196,45 +208,41 @@ export default function ApplicationDetailPage() {
                   }
                 />
               </label>
-              <button
-                type="submit"
-                className="w-fit rounded-md border border-zinc-300 px-3 py-2 text-sm"
-              >
+              <button type="submit" className="jt-button jt-button--primary">
                 Upload resume
               </button>
             </form>
           </section>
 
-          <section className="rounded-md border border-zinc-200 p-4">
-            <h2 className="text-sm font-semibold">Notes</h2>
-            <form className="mt-3 flex flex-col gap-3" onSubmit={handleAddNote}>
+          <section className="jt-panel">
+            <div className="jt-panel__title">Notes</div>
+            <form className="jt-form" onSubmit={handleAddNote}>
               <textarea
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                className="jt-textarea"
                 rows={3}
                 value={noteText}
                 onChange={(event) => setNoteText(event.target.value)}
                 placeholder="Add a note"
               />
-              <button
-                type="submit"
-                className="w-fit rounded-md border border-zinc-300 px-3 py-2 text-sm"
-              >
+              <button type="submit" className="jt-button jt-button--primary">
                 Add note
               </button>
             </form>
             {notes.length === 0 ? (
-              <p className="mt-3 text-sm text-zinc-600">No notes yet.</p>
+              <p className="jt-page__subtitle">No notes yet.</p>
             ) : (
-              <div className="mt-4 flex flex-col gap-3">
-                {notes.map((note) => (
+              <div className="jt-grid">
+                {notes.map((note, index) => (
                   <div
                     key={note.id}
-                    className="rounded-md border border-zinc-200 p-3"
+                    className={`jt-item-card jt-item-card--${
+                      noteCardTones[index % noteCardTones.length]
+                    }`}
                   >
                     {editingNoteId === note.id ? (
-                      <form className="flex flex-col gap-2" onSubmit={handleUpdateNote}>
+                      <form className="jt-form" onSubmit={handleUpdateNote}>
                         <textarea
-                          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                          className="jt-textarea"
                           rows={3}
                           value={editingNoteText}
                           onChange={(event) =>
@@ -242,16 +250,16 @@ export default function ApplicationDetailPage() {
                           }
                           aria-label="Edit note"
                         />
-                        <div className="flex flex-wrap gap-2">
+                        <div className="jt-row">
                           <button
                             type="submit"
-                            className="rounded-md border border-zinc-300 px-2 py-1 text-sm"
+                            className="jt-button jt-button--primary jt-button--sm"
                           >
                             Save
                           </button>
                           <button
                             type="button"
-                            className="rounded-md border border-zinc-300 px-2 py-1 text-sm"
+                            className="jt-button jt-button--outline jt-button--sm"
                             onClick={() => {
                               setEditingNoteId(null);
                               setEditingNoteText("");
@@ -263,11 +271,11 @@ export default function ApplicationDetailPage() {
                       </form>
                     ) : (
                       <>
-                        <p className="text-sm text-zinc-700">{note.note}</p>
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                        <p className="jt-item-card__meta">{note.note}</p>
+                        <div className="jt-row">
                           <button
                             type="button"
-                            className="rounded-md border border-zinc-300 px-2 py-1"
+                            className="jt-button jt-button--outline jt-button--sm"
                             onClick={() => {
                               setEditingNoteId(note.id);
                               setEditingNoteText(note.note);
@@ -277,7 +285,7 @@ export default function ApplicationDetailPage() {
                           </button>
                           <button
                             type="button"
-                            className="rounded-md border border-zinc-300 px-2 py-1"
+                            className="jt-button jt-button--outline jt-button--sm"
                             onClick={() => handleDeleteNote(note.id)}
                           >
                             Delete

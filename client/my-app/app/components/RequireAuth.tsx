@@ -22,7 +22,17 @@ export default function RequireAuth({
 
   if (!ready) {
     return (
-      <div className="text-sm text-zinc-600">Checking session...</div>
+      <div className="jt-auth">
+        <div className="jt-auth__card">
+          <span className="jt-pill">One moment</span>
+          <div>
+            <h1>Checking session...</h1>
+            <p className="jt-auth__meta">
+              Verifying your access before loading your dashboard.
+            </p>
+          </div>
+        </div>
+      </div>
     );
   }
 

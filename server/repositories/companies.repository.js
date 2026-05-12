@@ -1,3 +1,4 @@
+const { randomUUID } = require('crypto');
 const db = require('../db');
 const logger = require('../logger');
 
@@ -8,7 +9,10 @@ const logger = require('../logger');
  */
 const findAllByUserId = async (userId) => {
     try {
-        const result = await db.query('SELECT * FROM companies WHERE user_id = @userId AND is_deleted = 0', { userId });
+        const result = await db.query(
+            'SELECT * FROM companies WHERE user_id = ? AND is_deleted = 0',
+            [userId]
+        );
         return result.recordset;
     } catch (error) {
         logger.error(`Error finding companies by user ID: ${error.message}`);
@@ -24,7 +28,10 @@ const findAllByUserId = async (userId) => {
  */
 const findById = async (id, userId) => {
     try {
-        const result = await db.query('SELECT * FROM companies WHERE id = @id AND user_id = @userId AND is_deleted = 0', { id, userId });
+        const result = await db.query(
+            'SELECT * FROM companies WHERE id = ? AND user_id = ? AND is_deleted = 0',
+            [id, userId]
+        );
         return result.recordset[0];
     } catch (error) {
         logger.error(`Error finding company by ID: ${error.message}`);
@@ -40,10 +47,13 @@ const findById = async (id, userId) => {
 const create = async (companyData) => {
     const { name, user_id, location, website } = companyData;
     try {
-        const result = await db.query(
-            'INSERT INTO companies (name, user_id, location, website) OUTPUT INSERTED.* VALUES (@name, @user_id, @location, @website)',
-            { name, user_id, location, website }
+        const id = randomUUID();
+        await db.query(
+            `INSERT INTO companies (id, user_id, name, location, website, created_at, updated_at, is_deleted)
+             VALUES (?, ?, ?, ?, ?, NOW(), NOW(), 0)`,
+            [id, user_id, name, location ?? null, website ?? null]
         );
+        const result = await db.query('SELECT * FROM companies WHERE id = ?', [id]);
         return result.recordset[0];
     } catch (error) {
         logger.error(`Error creating company: ${error.message}`);
@@ -62,18 +72,18 @@ const update = async (id, userId, companyData) => {
     const { name, location, website } = companyData;
     // Build the set clause dynamically
     const setClauses = [];
-    const params = { id, userId };
+    const values = [];
     if (name !== undefined) {
-        setClauses.push('name = @name');
-        params.name = name;
+        setClauses.push('name = ?');
+        values.push(name);
     }
     if (location !== undefined) {
-        setClauses.push('location = @location');
-        params.location = location;
+        setClauses.push('location = ?');
+        values.push(location);
     }
     if (website !== undefined) {
-        setClauses.push('website = @website');
-        params.website = website;
+        setClauses.push('website = ?');
+        values.push(website);
     }
 
     if (setClauses.length === 0) {
@@ -81,14 +91,13 @@ const update = async (id, userId, companyData) => {
     }
 
     const queryText = `
-        UPDATE companies 
-        SET ${setClauses.join(', ')}, updated_at = GETDATE() 
-        OUTPUT INSERTED.* 
-        WHERE id = @id AND user_id = @userId AND is_deleted = 0`;
+        UPDATE companies
+        SET ${setClauses.join(', ')}, updated_at = NOW()
+        WHERE id = ? AND user_id = ? AND is_deleted = 0`;
 
     try {
-        const result = await db.query(queryText, params);
-        return result.recordset[0];
+        await db.query(queryText, [...values, id, userId]);
+        return findById(id, userId);
     } catch (error) {
         logger.error(`Error updating company: ${error.message}`);
         throw error;
@@ -103,7 +112,10 @@ const update = async (id, userId, companyData) => {
  */
 const softDelete = async (id, userId) => {
     try {
-        const result = await db.query('UPDATE companies SET is_deleted = 1, updated_at = GETDATE() WHERE id = @id AND user_id = @userId AND is_deleted = 0', { id, userId });
+        const result = await db.query(
+            'UPDATE companies SET is_deleted = 1, updated_at = NOW() WHERE id = ? AND user_id = ? AND is_deleted = 0',
+            [id, userId]
+        );
         return result.rowsAffected[0];
     } catch (error) {
         logger.error(`Error soft deleting company: ${error.message}`);

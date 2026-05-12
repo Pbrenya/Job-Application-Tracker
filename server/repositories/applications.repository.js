@@ -1,13 +1,14 @@
-const { poolPromise, sql } = require('../db');
+const { randomUUID } = require('crypto');
+const db = require('../db');
 const logger = require('../logger');
 
 const applicationRepository = {
     findAllByUserId: async (userId) => {
         try {
-            const pool = await poolPromise;
-            const result = await pool.request()
-                .input('user_id', sql.UniqueIdentifier, userId)
-                .query('SELECT * FROM applications WHERE user_id = @user_id AND deleted_at IS NULL');
+            const result = await db.query(
+                'SELECT * FROM applications WHERE user_id = ? AND deleted_at IS NULL',
+                [userId]
+            );
             return result.recordset;
         } catch (err) {
             logger.error(err.message);
@@ -18,21 +19,41 @@ const applicationRepository = {
     create: async (applicationData) => {
         const { user_id, company_id, job_title, description, applied_at, stage_id, salary_min, salary_max, job_url, resume_path } = applicationData;
         try {
-            const pool = await poolPromise;
-            const result = await pool.request()
-                .input('user_id', sql.UniqueIdentifier, user_id)
-                .input('company_id', sql.UniqueIdentifier, company_id)
-                .input('job_title', sql.NVarChar, job_title)
-                .input('description', sql.NVarChar, description)
-                .input('applied_at', sql.Date, applied_at)
-                .input('stage_id', sql.Int, stage_id)
-                .input('salary_min', sql.Int, salary_min)
-                .input('salary_max', sql.Int, salary_max)
-                .input('job_url', sql.NVarChar, job_url)
-                .input('resume_path', sql.NVarChar, resume_path)
-                .query(`INSERT INTO applications (user_id, company_id, job_title, description, applied_at, stage_id, salary_min, salary_max, job_url, resume_path) 
-                        OUTPUT INSERTED.*
-                        VALUES (@user_id, @company_id, @job_title, @description, @applied_at, @stage_id, @salary_min, @salary_max, @job_url, @resume_path)`);
+            const id = randomUUID();
+            await db.query(
+                `INSERT INTO applications (
+                    id,
+                    user_id,
+                    company_id,
+                    job_title,
+                    description,
+                    applied_at,
+                    stage_id,
+                    salary_min,
+                    salary_max,
+                    job_url,
+                    resume_path,
+                    created_at,
+                    updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+                [
+                    id,
+                    user_id,
+                    company_id,
+                    job_title,
+                    description ?? null,
+                    applied_at ?? null,
+                    stage_id,
+                    salary_min ?? null,
+                    salary_max ?? null,
+                    job_url ?? null,
+                    resume_path ?? null,
+                ]
+            );
+            const result = await db.query(
+                'SELECT * FROM applications WHERE id = ? AND user_id = ?',
+                [id, user_id]
+            );
             return result.recordset[0];
         } catch (err) {
             logger.error(err.message);
@@ -42,11 +63,10 @@ const applicationRepository = {
 
     findById: async (id, userId) => {
         try {
-            const pool = await poolPromise;
-            const result = await pool.request()
-                .input('id', sql.UniqueIdentifier, id)
-                .input('user_id', sql.UniqueIdentifier, userId)
-                .query('SELECT * FROM applications WHERE id = @id AND user_id = @user_id AND deleted_at IS NULL');
+            const result = await db.query(
+                'SELECT * FROM applications WHERE id = ? AND user_id = ? AND deleted_at IS NULL',
+                [id, userId]
+            );
             return result.recordset[0];
         } catch (err) {
             logger.error(err.message);
@@ -58,46 +78,43 @@ const applicationRepository = {
         const { company_id, job_title, description, applied_at, stage_id, salary_min, salary_max, job_url, resume_path } = applicationData;
         
         const setClauses = [];
-        const request = new sql.Request();
-
-        request.input('id', sql.UniqueIdentifier, id);
-        request.input('user_id', sql.UniqueIdentifier, userId);
+        const values = [];
 
         if (company_id !== undefined) {
-            setClauses.push('company_id = @company_id');
-            request.input('company_id', sql.UniqueIdentifier, company_id);
+            setClauses.push('company_id = ?');
+            values.push(company_id);
         }
         if (job_title !== undefined) {
-            setClauses.push('job_title = @job_title');
-            request.input('job_title', sql.NVarChar, job_title);
+            setClauses.push('job_title = ?');
+            values.push(job_title);
         }
         if (description !== undefined) {
-            setClauses.push('description = @description');
-            request.input('description', sql.NVarChar, description);
+            setClauses.push('description = ?');
+            values.push(description);
         }
         if (applied_at !== undefined) {
-            setClauses.push('applied_at = @applied_at');
-            request.input('applied_at', sql.Date, applied_at);
+            setClauses.push('applied_at = ?');
+            values.push(applied_at);
         }
         if (stage_id !== undefined) {
-            setClauses.push('stage_id = @stage_id');
-            request.input('stage_id', sql.Int, stage_id);
+            setClauses.push('stage_id = ?');
+            values.push(stage_id);
         }
         if (salary_min !== undefined) {
-            setClauses.push('salary_min = @salary_min');
-            request.input('salary_min', sql.Int, salary_min);
+            setClauses.push('salary_min = ?');
+            values.push(salary_min);
         }
         if (salary_max !== undefined) {
-            setClauses.push('salary_max = @salary_max');
-            request.input('salary_max', sql.Int, salary_max);
+            setClauses.push('salary_max = ?');
+            values.push(salary_max);
         }
         if (job_url !== undefined) {
-            setClauses.push('job_url = @job_url');
-            request.input('job_url', sql.NVarChar, job_url);
+            setClauses.push('job_url = ?');
+            values.push(job_url);
         }
         if (resume_path !== undefined) {
-            setClauses.push('resume_path = @resume_path');
-            request.input('resume_path', sql.NVarChar, resume_path);
+            setClauses.push('resume_path = ?');
+            values.push(resume_path);
         }
 
         if (setClauses.length === 0) {
@@ -105,15 +122,13 @@ const applicationRepository = {
             return this.findById(id, userId);
         }
 
-        const query = `UPDATE applications 
-                       SET ${setClauses.join(', ')}
-                       OUTPUT INSERTED.*
-                       WHERE id = @id AND user_id = @user_id AND deleted_at IS NULL`;
+        const query = `UPDATE applications
+                       SET ${setClauses.join(', ')}, updated_at = NOW()
+                       WHERE id = ? AND user_id = ? AND deleted_at IS NULL`;
 
         try {
-            const pool = await poolPromise;
-            const result = await request.query(query);
-            return result.recordset[0];
+            await db.query(query, [...values, id, userId]);
+            return this.findById(id, userId);
         } catch (err) {
             logger.error(err.message);
             throw err;
@@ -122,11 +137,10 @@ const applicationRepository = {
 
     softDelete: async (id, userId) => {
         try {
-            const pool = await poolPromise;
-            const result = await pool.request()
-                .input('id', sql.UniqueIdentifier, id)
-                .input('user_id', sql.UniqueIdentifier, userId)
-                .query('UPDATE applications SET deleted_at = GETDATE() WHERE id = @id AND user_id = @user_id');
+            const result = await db.query(
+                'UPDATE applications SET deleted_at = NOW() WHERE id = ? AND user_id = ? AND deleted_at IS NULL',
+                [id, userId]
+            );
             return result.rowsAffected[0];
         } catch (err) {
             logger.error(err.message);

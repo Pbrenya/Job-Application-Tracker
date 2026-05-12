@@ -20,32 +20,46 @@ exports.setup = function(options, seedLink) {
 
 exports.up = function(db) {
   var filePath = path.join(__dirname, 'sqls', '20260508193850-initial-schema-up.sql');
-  return new Promise( function( resolve, reject ) {
-    fs.readFile(filePath, {encoding: 'utf-8'}, function(err,data){
+  return new Promise(function(resolve, reject) {
+    fs.readFile(filePath, { encoding: 'utf-8' }, function(err, data) {
       if (err) return reject(err);
-      console.log('received data: ' + data);
-
       resolve(data);
     });
   })
-  .then(function(data) {
-    return db.runSql(data);
-  });
+    .then(function(data) {
+      const statements = data
+        .split(/;\s*\n/)
+        .map((statement) => statement.trim())
+        .filter(Boolean);
+
+      return statements.reduce(
+        (promise, statement) =>
+          promise.then(() => db.runSql(statement)),
+        Promise.resolve()
+      );
+    });
 };
 
 exports.down = function(db) {
   var filePath = path.join(__dirname, 'sqls', '20260508193850-initial-schema-down.sql');
-  return new Promise( function( resolve, reject ) {
-    fs.readFile(filePath, {encoding: 'utf-8'}, function(err,data){
+  return new Promise(function(resolve, reject) {
+    fs.readFile(filePath, { encoding: 'utf-8' }, function(err, data) {
       if (err) return reject(err);
-      console.log('received data: ' + data);
-
       resolve(data);
     });
   })
-  .then(function(data) {
-    return db.runSql(data);
-  });
+    .then(function(data) {
+      const statements = data
+        .split(/;\s*\n/)
+        .map((statement) => statement.trim())
+        .filter(Boolean);
+
+      return statements.reduce(
+        (promise, statement) =>
+          promise.then(() => db.runSql(statement)),
+        Promise.resolve()
+      );
+    });
 };
 
 exports._meta = {

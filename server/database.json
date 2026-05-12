@@ -1,25 +1,19 @@
 {
     "dev": {
-        "driver": "mssql",
-        "user": "your_username",
-        "password": "your_password",
+        "driver": "mysql",
+        "user": "brenya1211@gmail.com",
+        "password": "0000",
         "host": "localhost",
-        "database": "JobApplicationTracker",
-        "options": {
-            "encrypt": true,
-            "trustServerCertificate": true
-        }
+        "port": 3306,
+        "database": "JobApplicationTracker"
     },
     "test": {
-        "driver": "mssql",
-        "user": "your_username",
-        "password": "your_password",
+        "driver": "mysql",
+        "user": "brenya1211@gmail.com",
+        "password": "0000",
         "host": "localhost",
-        "database": "JobApplicationTracker_Test",
-        "options": {
-            "encrypt": true,
-            "trustServerCertificate": true
-        }
+        "port": 3306,
+        "database": "JobApplicationTracker_Test"
     },
     "sql-file": true
 }
