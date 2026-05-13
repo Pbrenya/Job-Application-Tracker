@@ -26,9 +26,11 @@ const readErrorMessage = async (response: Response) => {
   return fallback;
 };
 
+type JsonRequestInit = Omit<RequestInit, "body"> & { body?: unknown };
+
 async function requestJson<T>(
   path: string,
-  options: RequestInit & { body?: unknown } = {}
+  options: JsonRequestInit = {}
 ): Promise<T> {
   const url = buildUrl(path);
   const headers = new Headers(options.headers);
