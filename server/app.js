@@ -5,6 +5,11 @@ const errorHandler = require('./middleware/errorHandler');
 // Init Middleware
 app.use(express.json({ extended: false }));
 
+// Simple health check for the root route
+app.get('/', (req, res) => {
+	res.status(200).send('API is active');
+});
+
 // Define Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/applications', require('./routes/applications'));
