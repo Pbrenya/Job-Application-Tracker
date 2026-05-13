@@ -1,9 +1,36 @@
+const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
 
+const envUploadDir = process.env.UPLOAD_DIR;
+const isVercel = Boolean(process.env.VERCEL);
+const defaultUploadRoot = path.join(__dirname, '..', 'uploads');
+const vercelUploadRoot = path.join('/tmp', 'uploads');
+
+let uploadRoot = envUploadDir
+    ? (path.isAbsolute(envUploadDir)
+        ? envUploadDir
+        : path.resolve(__dirname, '..', envUploadDir))
+    : (isVercel ? vercelUploadRoot : defaultUploadRoot);
+
+if (isVercel && !uploadRoot.startsWith('/tmp')) {
+    uploadRoot = vercelUploadRoot;
+}
+
+try {
+    fs.mkdirSync(uploadRoot, { recursive: true });
+} catch (err) {
+    if (isVercel && err && err.code !== 'EEXIST') {
+        uploadRoot = vercelUploadRoot;
+        fs.mkdirSync(uploadRoot, { recursive: true });
+    } else {
+        throw err;
+    }
+}
+
 // Set up storage engine
 const storage = multer.diskStorage({
-    destination: './uploads/',
+    destination: uploadRoot,
     filename: function(req, file, cb){
         // null as the first argument means no error
         cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
