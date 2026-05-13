@@ -53,11 +53,19 @@ export const applyApplicationFilters = (
   const locationByCompany = new Map(
     companies.map((company) => [company.id, company.location ?? ""])
   );
+  const companyNameById = new Map(
+    companies.map((company) => [company.id, company.name ?? ""])
+  );
 
   return applications.filter((application) => {
     if (filters.role.trim()) {
       const title = application.job_title ?? "";
-      if (!matchesText(title, filters.role.trim())) {
+      const companyName =
+        companyNameById.get(application.company_id) ?? "";
+      if (
+        !matchesText(title, filters.role.trim()) &&
+        !matchesText(companyName, filters.role.trim())
+      ) {
         return false;
       }
     }

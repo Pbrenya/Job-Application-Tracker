@@ -30,3 +30,7 @@
 {"level":"error","message":"Database Connection Failed: Database configuration is incomplete. Make sure DB_SERVER, DB_USER, and DB_DATABASE are set.","service":"user-service"}
 {"level":"info","message":"Database connection pool created.","service":"user-service"}
 {"level":"info","message":"Seed data added.","service":"user-service"}
+{"level":"info","message":"Database connection pool created.","service":"user-service"}
+{"level":"info","message":"Database connection pool created.","service":"user-service"}
+{"level":"info","message":"Seed data added.","service":"user-service"}
+{"level":"info","message":"Database connection pool created.","service":"user-service"}

@@ -213,6 +213,11 @@ export default function ApplicationsPage() {
               <p className="jt-page__subtitle">
                 Manage every role, stage, and salary range in one place.
               </p>
+              <div className="jt-row">
+                <span className="jt-pill">
+                  Showing {filteredApplications.length} of {applications.length}
+                </span>
+              </div>
             </div>
             <Link className="jt-button jt-button--outline" href="/companies">
               Manage companies

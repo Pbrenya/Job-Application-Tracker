@@ -152,6 +152,11 @@ export default function CompaniesPage() {
               <p className="jt-page__subtitle">
                 Keep a clear list of the teams you are targeting.
               </p>
+              <div className="jt-row">
+                <span className="jt-pill">
+                  Showing {filteredCompanies.length} of {companies.length}
+                </span>
+              </div>
             </div>
           </div>
           {loading ? <p className="jt-page__subtitle">Loading...</p> : null}

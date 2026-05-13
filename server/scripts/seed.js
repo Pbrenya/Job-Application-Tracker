@@ -59,6 +59,56 @@ const seedCompanies = [
     website: 'https://www.lifeatspotify.com',
     location: 'Remote',
   },
+  {
+    name: 'Meta',
+    website: 'https://www.metacareers.com',
+    location: 'Menlo Park, CA',
+  },
+  {
+    name: 'Netflix',
+    website: 'https://jobs.netflix.com',
+    location: 'Los Gatos, CA',
+  },
+  {
+    name: 'Adobe',
+    website: 'https://careers.adobe.com',
+    location: 'San Jose, CA',
+  },
+  {
+    name: 'Figma',
+    website: 'https://www.figma.com/careers',
+    location: 'San Francisco, CA',
+  },
+  {
+    name: 'Atlassian',
+    website: 'https://www.atlassian.com/company/careers',
+    location: 'Sydney, AU',
+  },
+  {
+    name: 'Shopify',
+    website: 'https://www.shopify.com/careers',
+    location: 'Remote',
+  },
+  {
+    name: 'Microsoft',
+    website: 'https://careers.microsoft.com',
+    location: 'Redmond, WA',
+  },
+  {
+    name: 'HubSpot',
+    website: 'https://www.hubspot.com/careers',
+    location: 'Boston, MA',
+  },
+  {
+    name: 'Stripe',
+    website: 'https://stripe.com/jobs',
+    location: 'Seattle, WA',
+  },
+  {
+    name: 'Notion',
+    website: 'https://www.notion.so/careers',
+    location: 'San Francisco, CA',
+  },
 ];
 
 const seedApplications = [
@@ -152,6 +202,150 @@ const seedApplications = [
     salary_max: 165000,
     job_url: 'https://jobs.apple.com/en-us/search',
   },
+  {
+    company: 'Meta',
+    job_title: 'Product Designer II',
+    stage_id: 2,
+    applied_at: '2024-03-08',
+    salary_min: 130000,
+    salary_max: 175000,
+    job_url: 'https://www.metacareers.com',
+  },
+  {
+    company: 'Netflix',
+    job_title: 'UX/UI Designer',
+    stage_id: 3,
+    applied_at: '2024-03-12',
+    salary_min: 140000,
+    salary_max: 185000,
+    job_url: 'https://jobs.netflix.com',
+  },
+  {
+    company: 'Adobe',
+    job_title: 'Visual Designer',
+    stage_id: 1,
+    applied_at: '2024-03-05',
+    salary_min: 105000,
+    salary_max: 135000,
+    job_url: 'https://careers.adobe.com',
+  },
+  {
+    company: 'Figma',
+    job_title: 'Design Systems Lead',
+    stage_id: 4,
+    applied_at: '2024-03-18',
+    salary_min: 145000,
+    salary_max: 190000,
+    job_url: 'https://www.figma.com/careers',
+  },
+  {
+    company: 'Atlassian',
+    job_title: 'Senior Product Designer',
+    stage_id: 2,
+    applied_at: '2024-02-28',
+    salary_min: 120000,
+    salary_max: 155000,
+    job_url: 'https://www.atlassian.com/company/careers',
+  },
+  {
+    company: 'Shopify',
+    job_title: 'UX Researcher',
+    stage_id: 3,
+    applied_at: '2024-01-22',
+    salary_min: 110000,
+    salary_max: 145000,
+    job_url: 'https://www.shopify.com/careers',
+  },
+  {
+    company: 'Microsoft',
+    job_title: 'Interaction Designer II',
+    stage_id: 5,
+    applied_at: '2024-02-14',
+    salary_min: 135000,
+    salary_max: 175000,
+    job_url: 'https://careers.microsoft.com',
+  },
+  {
+    company: 'HubSpot',
+    job_title: 'Content Designer',
+    stage_id: 1,
+    applied_at: '2024-03-03',
+    salary_min: 90000,
+    salary_max: 120000,
+    job_url: 'https://www.hubspot.com/careers',
+  },
+  {
+    company: 'Stripe',
+    job_title: 'Product Designer',
+    stage_id: 4,
+    applied_at: '2024-03-22',
+    salary_min: 150000,
+    salary_max: 195000,
+    job_url: 'https://stripe.com/jobs',
+  },
+  {
+    company: 'Notion',
+    job_title: 'Brand Designer',
+    stage_id: 2,
+    applied_at: '2024-03-10',
+    salary_min: 115000,
+    salary_max: 150000,
+    job_url: 'https://www.notion.so/careers',
+  },
+  {
+    company: 'Meta',
+    job_title: 'Design Program Manager',
+    stage_id: 1,
+    applied_at: '2024-02-01',
+    salary_min: 125000,
+    salary_max: 160000,
+    job_url: 'https://www.metacareers.com',
+  },
+  {
+    company: 'Figma',
+    job_title: 'Senior UX Writer',
+    stage_id: 3,
+    applied_at: '2024-02-17',
+    salary_min: 120000,
+    salary_max: 155000,
+    job_url: 'https://www.figma.com/careers',
+  },
+  {
+    company: 'Adobe',
+    job_title: 'Product Design Manager',
+    stage_id: 6,
+    applied_at: '2023-12-05',
+    salary_min: 150000,
+    salary_max: 190000,
+    job_url: 'https://careers.adobe.com',
+  },
+  {
+    company: 'Stripe',
+    job_title: 'Design Systems Designer',
+    stage_id: 2,
+    applied_at: '2024-01-11',
+    salary_min: 140000,
+    salary_max: 180000,
+    job_url: 'https://stripe.com/jobs',
+  },
+  {
+    company: 'Microsoft',
+    job_title: 'Service Designer',
+    stage_id: 3,
+    applied_at: '2024-03-02',
+    salary_min: 120000,
+    salary_max: 160000,
+    job_url: 'https://careers.microsoft.com',
+  },
+  {
+    company: 'Shopify',
+    job_title: 'Visual Design Lead',
+    stage_id: 4,
+    applied_at: '2024-02-21',
+    salary_min: 130000,
+    salary_max: 165000,
+    job_url: 'https://www.shopify.com/careers',
+  },
 ];
 
 const seedNotes = [
@@ -160,6 +354,13 @@ const seedNotes = [
   'Follow up sent after interview.',
   'Waiting on feedback from hiring manager.',
   'Prepare case study walkthrough.',
+  'Received take-home assignment.',
+  'Asked for salary expectations.',
+  'Second round scheduled next week.',
+  'Sent thank-you email after interview.',
+  'Need to update resume for this role.',
+  'Waiting on recruiter to confirm timeline.',
+  'Panel interview completed.',
 ];
 
 const ensureStages = async () => {
@@ -311,7 +512,9 @@ const seed = async () => {
   for (let index = 0; index < applicationIds.length; index += 1) {
     const applicationId = applicationIds[index];
     const note = seedNotes[index % seedNotes.length];
+    const followUpNote = seedNotes[(index + 5) % seedNotes.length];
     await ensureNote(primaryUserId, applicationId, note);
+    await ensureNote(primaryUserId, applicationId, followUpNote);
   }
 
   logger.info('Seed data added.');
