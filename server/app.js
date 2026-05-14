@@ -1,8 +1,10 @@
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const errorHandler = require('./middleware/errorHandler');
 
 // Init Middleware
+app.use(cors({ origin: 'https://yourdomain.com' }));
 app.use(express.json({ extended: false }));
 
 // Simple health check for the root route
